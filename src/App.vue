@@ -1,28 +1,81 @@
 <template>
-  <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png" />
-    <HelloWorld msg="Welcome to Your Vue.js App" />
+  <div id="app" class="container mt-5">
+    <h1 class="fw-bold mb-5">My Vue.js Shop</h1>
+    <router-view
+      :cart="cart"
+      :cartTotal="cartTotal"
+      :cartQty="cartQty"
+      :maximum.sync="maximum"
+      :products="products"
+      :sliderStatus="sliderStatus"
+      @add="addItem"
+      @delete="deleteItem"
+      @toggle="toggleSliderStatus"
+    />
   </div>
 </template>
 
 <script>
-import HelloWorld from "./components/HelloWorld.vue";
-
 export default {
   name: "App",
-  components: {
-    HelloWorld,
+  data: function () {
+    return {
+      maximum: 99,
+      sliderStatus: true,
+      cart: [],
+      products: null,
+    };
+  },
+  computed: {
+    cartTotal: function () {
+      let sum = 0;
+      for (let key in this.cart) {
+        sum += this.cart[key].product.price * this.cart[key].qty;
+      }
+      return sum;
+    },
+    cartQty: function () {
+      let qty = 0;
+      for (let key in this.cart) {
+        qty += this.cart[key].qty;
+      }
+      return qty;
+    },
+  },
+  methods: {
+    addItem: function (product) {
+      var whichProduct;
+      var existing = this.cart.filter(function (item, index) {
+        if (item.product.id == Number(product.id)) {
+          whichProduct = index;
+          return true;
+        } else {
+          return false;
+        }
+      });
+      if (existing.length) {
+        this.cart[whichProduct].qty++;
+      } else {
+        this.cart.push({ product: product, qty: 1 });
+      }
+    },
+    deleteItem: function (id) {
+      if (this.cart[id].qty > 1) {
+        this.cart[id].qty--;
+      } else {
+        this.cart.splice(id, 1);
+      }
+    },
+    toggleSliderStatus: function () {
+      this.sliderStatus = !this.sliderStatus;
+    },
+  },
+  mounted: function () {
+    fetch("https://hplussport.com/api/products/order/price")
+      .then((response) => response.json())
+      .then((data) => {
+        this.products = data;
+      });
   },
 };
 </script>
-
-<style>
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
-}
-</style>
